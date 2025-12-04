@@ -38,6 +38,17 @@ class PriceChecker {
     }
 
     setupEventListeners() {
+        // Очистка поля при любом нажатии клавиши (для сканеров)
+        document.addEventListener('keypress', (e) => {
+            // Игнорируем Enter и специальные клавиши
+            if (e.key !== 'Enter' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                // Очищаем поле перед новым сканированием
+                if (this.barcodeInput.value.length > 0) {
+                    this.barcodeInput.value = '';
+                }
+            }
+        });
+
         // Автоматическая проверка при вводе (для сканеров, которые добавляют Enter)
         this.barcodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {

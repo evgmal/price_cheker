@@ -42,7 +42,7 @@ header {
 }
 
 header h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--primary-color);
     cursor: pointer;
     user-select: none;
@@ -67,16 +67,19 @@ header h1:active {
     margin-bottom: 10px;
     font-weight: 500;
     color: var(--text-primary);
+    font-size: 20px;
 }
 
 .scan-section input {
     width: 100%;
-    padding: 15px;
+    padding: 20px;
     border: 2px solid #e0e0e0;
     border-radius: var(--border-radius);
-    font-size: 16px;
+    font-size: 24px;
     margin-bottom: 15px;
     transition: border-color 0.3s;
+    text-align: center;
+    font-weight: 600;
 }
 
 .scan-section input:focus {
@@ -88,10 +91,10 @@ header h1:active {
 .btn-primary,
 .btn-secondary {
     width: 100%;
-    padding: 15px;
+    padding: 18px;
     border: none;
     border-radius: var(--border-radius);
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
@@ -133,11 +136,11 @@ header h1:active {
 }
 
 .spinner {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     margin: 0 auto 20px;
-    border: 4px solid #e0e0e0;
-    border-top: 4px solid var(--primary-color);
+    border: 5px solid #e0e0e0;
+    border-top: 5px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -149,7 +152,8 @@ header h1:active {
 
 .loading p {
     color: var(--text-secondary);
-    font-size: 16px;
+    font-size: 22px;
+    font-weight: 500;
 }
 
 /* Результат */
@@ -178,14 +182,15 @@ header h1:active {
 }
 
 .result-card h2 {
-    font-size: 1.5rem;
+    font-size: 2rem;
     margin-bottom: 20px;
     color: var(--text-primary);
+    text-align: center;
 }
 
 .price-display {
     background: linear-gradient(135deg, var(--primary-color), #1976D2);
-    padding: 30px;
+    padding: 40px;
     border-radius: var(--border-radius);
     text-align: center;
     margin-bottom: 20px;
@@ -194,18 +199,18 @@ header h1:active {
 
 .price-label {
     display: block;
-    font-size: 14px;
+    font-size: 18px;
     opacity: 0.9;
     margin-bottom: 10px;
 }
 
 .price-value {
-    font-size: 3rem;
+    font-size: 4rem;
     font-weight: bold;
 }
 
 .currency {
-    font-size: 2rem;
+    font-size: 3rem;
     margin-left: 10px;
 }
 
@@ -218,13 +223,13 @@ header h1:active {
 
 .barcode-label {
     display: block;
-    font-size: 14px;
+    font-size: 16px;
     color: var(--text-secondary);
     margin-bottom: 5px;
 }
 
 #barcode-display {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
     color: var(--text-primary);
     font-family: 'Courier New', monospace;
@@ -258,10 +263,12 @@ header h1:active {
 .error-card h3 {
     color: var(--error-color);
     margin-bottom: 10px;
+    font-size: 1.5rem;
 }
 
 .error-card p {
     color: var(--text-secondary);
+    font-size: 18px;
 }
 
 /* История */
@@ -276,6 +283,7 @@ header h1:active {
 .history-section h3 {
     margin-bottom: 15px;
     color: var(--text-primary);
+    font-size: 1.5rem;
 }
 
 .history-list {
@@ -288,6 +296,7 @@ header h1:active {
     text-align: center;
     color: var(--text-secondary);
     padding: 20px;
+    font-size: 18px;
 }
 
 .history-item {
@@ -300,10 +309,11 @@ header h1:active {
 .history-name {
     font-weight: 600;
     margin-bottom: 5px;
+    font-size: 18px;
 }
 
 .history-price {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     color: var(--success-color);
     font-weight: bold;
     margin-bottom: 5px;
@@ -312,12 +322,12 @@ header h1:active {
 .history-barcode {
     font-family: 'Courier New', monospace;
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 16px;
     margin-bottom: 5px;
 }
 
 .history-time {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-secondary);
 }
 
