@@ -1,0 +1,26 @@
+{
+  "name": "price-checker-pwa",
+  "version": "1.0.0",
+  "description": "PWA приложение для проверки цен по штрих-коду",
+  "main": "index.html",
+  "scripts": {
+    "start": "node mock-api.js",
+    "serve": "npx http-server -p 8000 -c-1",
+    "dev": "npm run start",
+    "test": "echo \"Откройте http://localhost:8000 в браузере\" && npm run serve"
+  },
+  "keywords": [
+    "pwa",
+    "price-checker",
+    "barcode",
+    "android",
+    "price",
+    "scanner"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

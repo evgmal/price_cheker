@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание placeholder иконок</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 { color: #2196F3; }
+        .icon-display {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        .info {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Создание временных иконок</h1>
+    <p>Эта страница поможет создать базовые иконки для тестирования PWA</p>
+
+    <div class="icon-display">
+        <div>
+            <h3>192x192</h3>
+            <canvas id="canvas192" width="192" height="192"></canvas>
+            <br><br>
+            <button onclick="download('canvas192', 'icon-192.png')">Скачать 192x192</button>
+        </div>
+        <div>
+            <h3>512x512</h3>
+            <canvas id="canvas512" width="512" height="512"></canvas>
+            <br><br>
+            <button onclick="download('canvas512', 'icon-512.png')">Скачать 512x512</button>
+        </div>
+    </div>
+
+    <button onclick="downloadBoth()">Скачать обе иконки</button>
+
+    <div class="info">
+        <h3>Инструкция:</h3>
+        <ol>
+            <li>Нажмите "Скачать обе иконки" или скачайте каждую отдельно</li>
+            <li>Сохраните файлы как <code>icon-192.png</code> и <code>icon-512.png</code></li>
+            <li>Поместите их в папку с проектом</li>
+            <li>Перезагрузите приложение</li>
+        </ol>
+        <p><strong>Примечание:</strong> Это базовые иконки для тестирования.
+        Для production используйте <a href="icon-generator.html">генератор иконок</a>
+        или создайте собственные иконки.</p>
+    </div>
+
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            // Градиентный фон
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#2196F3');
+            gradient.addColorStop(1, '#1565C0');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Рамка
+            ctx.strokeStyle = '#0D47A1';
+            ctx.lineWidth = size * 0.02;
+            ctx.strokeRect(0, 0, size, size);
+
+            // Рисуем штрих-код (символичный)
+            ctx.fillStyle = 'white';
+            const barWidth = size * 0.05;
+            const barHeight = size * 0.4;
+            const startX = size * 0.2;
+            const startY = size * 0.25;
+
+            // Вертикальные линии штрих-кода
+            for (let i = 0; i < 8; i++) {
+                const width = (i % 2 === 0) ? barWidth : barWidth * 0.5;
+                ctx.fillRect(startX + i * barWidth * 1.5, startY, width, barHeight);
+            }
+
+            // Текст "₽" (знак рубля)
+            ctx.font = `bold ${size * 0.35}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = 'white';
+            ctx.fillText('₽', size * 0.7, size * 0.8);
+        }
+
+        function download(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadBoth() {
+            setTimeout(() => download('canvas192', 'icon-192.png'), 100);
+            setTimeout(() => download('canvas512', 'icon-512.png'), 300);
+        }
+
+        // Создаем иконки при загрузке страницы
+        createIcon('canvas192', 192);
+        createIcon('canvas512', 512);
+    </script>
+</body>
+</html>

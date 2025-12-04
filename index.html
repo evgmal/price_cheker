@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="description" content="Приложение для проверки цен по штрих-коду">
+    <title>Прайс Чекер</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="app-title">📦 Прайс Чекер</h1>
+        </header>
+
+        <main>
+            <div class="scan-section">
+                <label for="barcode-input">Отсканируйте или введите штрих-код:</label>
+                <input
+                    type="text"
+                    id="barcode-input"
+                    placeholder="Штрих-код товара"
+                    autofocus
+                    autocomplete="off"
+                >
+                <button id="manual-check" class="btn-primary">Проверить цену</button>
+            </div>
+
+            <!-- Анимация загрузки -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Загрузка...</p>
+            </div>
+
+            <!-- Результат -->
+            <div id="result" class="result hidden">
+                <div class="result-card">
+                    <h2 id="product-name">Название товара</h2>
+                    <div class="price-display">
+                        <span class="price-label">Цена:</span>
+                        <span class="price-value" id="price-value">0.00</span>
+                        <span class="currency">₽</span>
+                    </div>
+                    <div class="barcode-info">
+                        <span class="barcode-label">Штрих-код:</span>
+                        <span id="barcode-display"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ошибка -->
+            <div id="error" class="error hidden">
+                <div class="error-card">
+                    <h3>❌ Ошибка</h3>
+                    <p id="error-message"></p>
+                </div>
+            </div>
+
+            <!-- История последних проверок -->
+            <div class="history-section">
+                <h3>История проверок</h3>
+                <div id="history-list" class="history-list"></div>
+                <button id="clear-history" class="btn-secondary">Очистить историю</button>
+            </div>
+        </main>
+
+        <!-- Настройки (скрытые) -->
+        <div class="settings-section">
+            <button id="settings-toggle" class="btn-secondary hidden">⚙️ Настройки</button>
+            <div id="settings-panel" class="settings-panel hidden">
+                <h3>Настройки API</h3>
+                <label for="api-url">URL для проверки цен:</label>
+                <input
+                    type="text"
+                    id="api-url"
+                    placeholder="https://api.example.com/price"
+                >
+                <button id="save-settings" class="btn-primary">Сохранить</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Версия 1.0 | PWA Ready</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
