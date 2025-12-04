@@ -7,6 +7,8 @@ class PriceChecker {
         this.clickCount = 0;
         this.clickTimer = null;
         this.settingsUnlocked = false;
+        this.scanCompleted = true; // Флаг завершения сканирования
+        this.lastKeyTime = 0;
         this.init();
     }
 
@@ -38,14 +40,19 @@ class PriceChecker {
     }
 
     setupEventListeners() {
-        // Очистка поля при любом нажатии клавиши (для сканеров)
+        // Очистка поля при начале нового сканирования
         document.addEventListener('keypress', (e) => {
+            const currentTime = Date.now();
+
             // Игнорируем Enter и специальные клавиши
             if (e.key !== 'Enter' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                // Очищаем поле перед новым сканированием
-                if (this.barcodeInput.value.length > 0) {
+                // Если прошло больше 500мс с последнего нажатия или сканирование завершено
+                // то это начало нового сканирования - очищаем поле
+                if (this.scanCompleted || (currentTime - this.lastKeyTime > 500)) {
                     this.barcodeInput.value = '';
+                    this.scanCompleted = false;
                 }
+                this.lastKeyTime = currentTime;
             }
         });
 
@@ -54,12 +61,14 @@ class PriceChecker {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.checkPrice();
+                this.scanCompleted = true; // Помечаем сканирование как завершенное
             }
         });
 
         // Ручная проверка по кнопке
         this.manualCheckBtn.addEventListener('click', () => {
             this.checkPrice();
+            this.scanCompleted = true;
         });
 
         // Скрытый доступ к настройкам (7 кликов по заголовку)
