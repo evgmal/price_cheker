@@ -6,31 +6,49 @@ const url = require('url');
 
 const PORT = 3000;
 
+// Функция генерации SVG изображения для товара
+function generateProductImage(name, color = '#2196F3') {
+    const svg = `
+        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" fill="${color}"/>
+            <text x="100" y="100" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" dominant-baseline="middle">
+                ${name}
+            </text>
+            <circle cx="100" cy="150" r="20" fill="white" opacity="0.3"/>
+        </svg>
+    `;
+    return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+}
+
 // База данных товаров (для примера)
 const products = {
     '4607034378486': {
         barcode: '4607034378486',
         name: 'Молоко 3.2% 1л',
         price: 89.90,
-        currency: 'RUB'
+        currency: 'RUB',
+        image: generateProductImage('Молоко', '#64B5F6')
     },
     '4601879008609': {
         barcode: '4601879008609',
         name: 'Хлеб белый 500г',
         price: 45.50,
-        currency: 'RUB'
+        currency: 'RUB',
+        image: generateProductImage('Хлеб', '#FFB74D')
     },
     '4690302932947': {
         barcode: '4690302932947',
         name: 'Масло сливочное 82.5% 200г',
         price: 189.00,
-        currency: 'RUB'
+        currency: 'RUB',
+        image: generateProductImage('Масло', '#FFD54F')
     },
     '1234567890123': {
         barcode: '1234567890123',
         name: 'Тестовый товар',
         price: 99.99,
-        currency: 'RUB'
+        currency: 'RUB',
+        image: generateProductImage('Тестовый товар', '#81C784')
     }
 };
 
@@ -74,11 +92,13 @@ const server = http.createServer((req, res) => {
                 console.log(`  → Товар найден: ${product.name}, цена: ${product.price} ${product.currency}`);
             } else {
                 // Если товар не найден, генерируем случайную цену для демонстрации
+                const randomPrice = Math.floor(Math.random() * 1000) + 50;
                 const randomProduct = {
                     barcode: barcode,
                     name: `Товар ${barcode}`,
-                    price: Math.floor(Math.random() * 1000) + 50,
-                    currency: 'RUB'
+                    price: randomPrice,
+                    currency: 'RUB',
+                    image: generateProductImage(`Товар ${barcode}`, '#9575CD')
                 };
 
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -106,7 +126,8 @@ const server = http.createServer((req, res) => {
                 barcode: barcode,
                 name: `Товар ${barcode}`,
                 price: Math.floor(Math.random() * 1000) + 50,
-                currency: 'RUB'
+                currency: 'RUB',
+                image: generateProductImage(`Товар ${barcode}`, '#9575CD')
             };
 
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -155,7 +176,8 @@ const server = http.createServer((req, res) => {
   "barcode": "1234567890123",
   "name": "Тестовый товар",
   "price": 99.99,
-  "currency": "RUB"
+  "currency": "RUB",
+  "image": "data:image/svg+xml;base64,..."
 }</pre>
 
                 <h2>Тестовые штрих-коды:</h2>

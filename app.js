@@ -3,27 +3,33 @@
 class PriceChecker {
     constructor() {
         this.apiUrl = this.loadApiUrl();
-        this.history = this.loadHistory();
         this.clickCount = 0;
         this.clickTimer = null;
         this.settingsUnlocked = false;
-        this.scanCompleted = true; // Флаг завершения сканирования
         this.lastKeyTime = 0;
+
+        // Новые свойства для редизайна
+        this.autoResetTimer = null;           // Таймер автоочистки (60 сек)
+        this.barcodeBuffer = '';              // Буфер для накопления штрих-кода
+        this.barcodeTimeout = null;           // Таймер очистки буфера
+        this.audioContext = null;             // Web Audio API для звукового сигнала
+        this.speechSynthesis = window.speechSynthesis; // Web Speech API
+
         this.init();
     }
 
     init() {
         // Получаем элементы
-        this.barcodeInput = document.getElementById('barcode-input');
-        this.manualCheckBtn = document.getElementById('manual-check');
+        this.idleScreen = document.getElementById('idle-screen');
         this.loadingEl = document.getElementById('loading');
         this.resultEl = document.getElementById('result');
         this.errorEl = document.getElementById('error');
+        this.productImageContainer = document.getElementById('product-image-container');
+        this.productImage = document.getElementById('product-image');
         this.settingsToggle = document.getElementById('settings-toggle');
         this.settingsPanel = document.getElementById('settings-panel');
         this.apiUrlInput = document.getElementById('api-url');
         this.saveSettingsBtn = document.getElementById('save-settings');
-        this.clearHistoryBtn = document.getElementById('clear-history');
         this.appTitle = document.getElementById('app-title');
 
         // Устанавливаем обработчики событий
@@ -32,43 +38,25 @@ class PriceChecker {
         // Загружаем настройки в UI
         this.apiUrlInput.value = this.apiUrl;
 
-        // Отображаем историю
-        this.renderHistory();
+        // Показываем экран ожидания
+        this.showIdleScreen();
+
+        // Инициализируем AudioContext для звуковых сигналов
+        this.initAudio();
 
         // Регистрируем Service Worker для PWA
         this.registerServiceWorker();
     }
 
     setupEventListeners() {
-        // Очистка поля при начале нового сканирования
+        // Глобальный перехват клавиатуры для сканирования штрих-кодов
         document.addEventListener('keypress', (e) => {
-            const currentTime = Date.now();
-
-            // Игнорируем Enter и специальные клавиши
-            if (e.key !== 'Enter' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                // Если прошло больше 500мс с последнего нажатия или сканирование завершено
-                // то это начало нового сканирования - очищаем поле
-                if (this.scanCompleted || (currentTime - this.lastKeyTime > 500)) {
-                    this.barcodeInput.value = '';
-                    this.scanCompleted = false;
-                }
-                this.lastKeyTime = currentTime;
+            // Игнорируем ввод в поля настроек
+            if (e.target.tagName === 'INPUT' && !this.settingsPanel.classList.contains('hidden')) {
+                return;
             }
-        });
 
-        // Автоматическая проверка при вводе (для сканеров, которые добавляют Enter)
-        this.barcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.checkPrice();
-                this.scanCompleted = true; // Помечаем сканирование как завершенное
-            }
-        });
-
-        // Ручная проверка по кнопке
-        this.manualCheckBtn.addEventListener('click', () => {
-            this.checkPrice();
-            this.scanCompleted = true;
+            this.handleBarcodeInput(e);
         });
 
         // Скрытый доступ к настройкам (7 кликов по заголовку)
@@ -84,18 +72,187 @@ class PriceChecker {
         this.saveSettingsBtn.addEventListener('click', () => {
             this.saveSettings();
         });
-
-        // Очистка истории
-        this.clearHistoryBtn.addEventListener('click', () => {
-            this.clearHistory();
-        });
     }
 
-    async checkPrice() {
-        const barcode = this.barcodeInput.value.trim();
+    handleBarcodeInput(e) {
+        const currentTime = Date.now();
 
+        // Enter завершает ввод штрих-кода
+        if (e.key === 'Enter') {
+            e.preventDefault();
+
+            if (this.barcodeBuffer.trim().length > 0) {
+                const barcode = this.barcodeBuffer.trim();
+                this.barcodeBuffer = '';
+                clearTimeout(this.barcodeTimeout);
+                this.checkPrice(barcode);
+            }
+            return;
+        }
+
+        // Игнорируем специальные клавиши
+        if (e.ctrlKey || e.altKey || e.metaKey) {
+            return;
+        }
+
+        // Если прошло больше 100мс с последнего символа - начинаем новый штрих-код
+        if (currentTime - this.lastKeyTime > 100) {
+            this.barcodeBuffer = '';
+        }
+
+        // Добавляем символ в буфер
+        this.barcodeBuffer += e.key;
+        this.lastKeyTime = currentTime;
+
+        // Таймаут автоочистки буфера (на случай неполного сканирования)
+        clearTimeout(this.barcodeTimeout);
+        this.barcodeTimeout = setTimeout(() => {
+            this.barcodeBuffer = '';
+        }, 200);
+    }
+
+    showIdleScreen() {
+        this.idleScreen.classList.remove('hidden');
+        this.hideResult();
+        this.hideError();
+        this.hideLoading();
+    }
+
+    startAutoResetTimer() {
+        // Очищаем предыдущий таймер если был
+        this.clearAutoResetTimer();
+
+        // Запускаем новый таймер на 60 секунд
+        this.autoResetTimer = setTimeout(() => {
+            this.resetToIdleScreen();
+        }, 60000); // 60 секунд
+    }
+
+    clearAutoResetTimer() {
+        if (this.autoResetTimer) {
+            clearTimeout(this.autoResetTimer);
+            this.autoResetTimer = null;
+        }
+    }
+
+    resetToIdleScreen() {
+        this.clearAutoResetTimer();
+        this.hideResult();
+        this.hideError();
+        this.showIdleScreen();
+    }
+
+    initAudio() {
+        try {
+            // Создаем AudioContext при первом взаимодействии
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
+        } catch (error) {
+            console.warn('AudioContext не поддерживается:', error);
+        }
+    }
+
+    playBeep() {
+        if (!this.audioContext) {
+            return;
+        }
+
+        try {
+            // Возобновляем AudioContext если он был приостановлен
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
+
+            // Создаем осциллятор для звукового сигнала
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            // Настройки звука: короткий биип на частоте 800 Hz
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+
+            // Огибающая громкости для плавного затухания
+            const now = this.audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+
+            // Воспроизводим звук длительностью 100мс
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+        } catch (error) {
+            console.warn('Ошибка воспроизведения звука:', error);
+        }
+    }
+
+    speakPrice(price) {
+        if (!this.speechSynthesis) {
+            console.warn('Web Speech API не поддерживается');
+            return;
+        }
+
+        // Парсим цену на рубли и копейки
+        const priceNum = parseFloat(price);
+        const rubles = Math.floor(priceNum);
+        const kopeks = Math.round((priceNum - rubles) * 100);
+
+        // Формируем текст с правильным склонением
+        let text = '';
+
+        if (rubles > 0) {
+            text += `${rubles} ${this.getRubleWord(rubles)}`;
+        }
+
+        if (kopeks > 0) {
+            if (rubles > 0) {
+                text += ' ';
+            }
+            text += `${kopeks} ${this.getKopekWord(kopeks)}`;
+        }
+
+        if (text === '') {
+            text = '0 рублей';
+        }
+
+        // Создаем и настраиваем синтез речи
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ru-RU';
+        utterance.rate = 0.9; // Немного медленнее для четкости
+        utterance.pitch = 1.0;
+
+        // Озвучиваем с небольшой задержкой после биипа
+        setTimeout(() => {
+            this.speechSynthesis.speak(utterance);
+        }, 200);
+    }
+
+    getRubleWord(number) {
+        const cases = [2, 0, 1, 1, 1, 2];
+        const titles = ['рубль', 'рубля', 'рублей'];
+
+        if (number % 100 > 4 && number % 100 < 20) {
+            return titles[2];
+        } else {
+            return titles[cases[(number % 10 < 5) ? number % 10 : 5]];
+        }
+    }
+
+    getKopekWord(number) {
+        const cases = [2, 0, 1, 1, 1, 2];
+        const titles = ['копейка', 'копейки', 'копеек'];
+
+        if (number % 100 > 4 && number % 100 < 20) {
+            return titles[2];
+        } else {
+            return titles[cases[(number % 10 < 5) ? number % 10 : 5]];
+        }
+    }
+
+    async checkPrice(barcode) {
         if (!barcode) {
-            this.showError('Пожалуйста, введите штрих-код');
+            this.showError('Пожалуйста, отсканируйте штрих-код');
             return;
         }
 
@@ -105,10 +262,17 @@ class PriceChecker {
         }
 
         try {
-            // Показываем анимацию загрузки
+            // Останавливаем таймер автоочистки
+            this.clearAutoResetTimer();
+
+            // Скрываем idle screen и показываем загрузку
+            this.idleScreen.classList.add('hidden');
             this.showLoading();
             this.hideResult();
             this.hideError();
+
+            // Воспроизводим звуковой сигнал
+            this.playBeep();
 
             // Отправляем запрос
             const response = await this.fetchPrice(barcode);
@@ -116,15 +280,18 @@ class PriceChecker {
             // Отображаем результат
             this.showResult(response, barcode);
 
-            // Добавляем в историю
-            this.addToHistory(barcode, response);
+            // Озвучиваем цену
+            this.speakPrice(response.price);
 
-            // Очищаем поле ввода
-            this.barcodeInput.value = '';
-            this.barcodeInput.focus();
+            // Запускаем таймер автоочистки (60 секунд)
+            this.startAutoResetTimer();
 
         } catch (error) {
             this.showError(error.message);
+            // При ошибке возвращаемся к idle screen через 5 секунд
+            setTimeout(() => {
+                this.resetToIdleScreen();
+            }, 5000);
         } finally {
             this.hideLoading();
         }
@@ -189,6 +356,14 @@ class PriceChecker {
         document.getElementById('price-value').textContent = price;
         document.getElementById('barcode-display').textContent = barcode;
 
+        // Отображаем изображение товара если есть
+        if (data.image) {
+            this.productImage.src = data.image;
+            this.productImageContainer.classList.remove('hidden');
+        } else {
+            this.productImageContainer.classList.add('hidden');
+        }
+
         this.resultEl.classList.remove('hidden');
     }
 
@@ -208,52 +383,6 @@ class PriceChecker {
 
     hideError() {
         this.errorEl.classList.add('hidden');
-    }
-
-    // История проверок
-    addToHistory(barcode, data) {
-        const item = {
-            barcode,
-            name: data.name || data.productName || 'Товар',
-            price: data.price,
-            timestamp: new Date().toLocaleString('ru-RU')
-        };
-
-        this.history.unshift(item);
-
-        // Ограничиваем историю 20 записями
-        if (this.history.length > 20) {
-            this.history = this.history.slice(0, 20);
-        }
-
-        this.saveHistory();
-        this.renderHistory();
-    }
-
-    renderHistory() {
-        const historyList = document.getElementById('history-list');
-
-        if (this.history.length === 0) {
-            historyList.innerHTML = '<p class="empty-history">История пуста</p>';
-            return;
-        }
-
-        historyList.innerHTML = this.history.map(item => `
-            <div class="history-item">
-                <div class="history-name">${item.name}</div>
-                <div class="history-price">${parseFloat(item.price).toFixed(2)} ₽</div>
-                <div class="history-barcode">${item.barcode}</div>
-                <div class="history-time">${item.timestamp}</div>
-            </div>
-        `).join('');
-    }
-
-    clearHistory() {
-        if (confirm('Вы уверены, что хотите очистить историю?')) {
-            this.history = [];
-            this.saveHistory();
-            this.renderHistory();
-        }
     }
 
     // Скрытая разблокировка настроек
@@ -325,16 +454,6 @@ class PriceChecker {
 
     loadApiUrl() {
         return localStorage.getItem('apiUrl') || '';
-    }
-
-    // LocalStorage для истории
-    saveHistory() {
-        localStorage.setItem('priceHistory', JSON.stringify(this.history));
-    }
-
-    loadHistory() {
-        const stored = localStorage.getItem('priceHistory');
-        return stored ? JSON.parse(stored) : [];
     }
 
     // Service Worker для PWA

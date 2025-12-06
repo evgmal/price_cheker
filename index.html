@@ -18,16 +18,34 @@
         </header>
 
         <main>
-            <div class="scan-section">
-                <label for="barcode-input">Отсканируйте или введите штрих-код:</label>
-                <input
-                    type="text"
-                    id="barcode-input"
-                    placeholder="Штрих-код товара"
-                    autofocus
-                    autocomplete="off"
-                >
-                <button id="manual-check" class="btn-primary">Проверить цену</button>
+            <!-- Экран ожидания -->
+            <div id="idle-screen" class="idle-screen">
+                <div class="idle-content">
+                    <div class="barcode-icon">
+                        <svg viewBox="0 0 100 100" width="120" height="120">
+                            <rect x="5" y="20" width="4" height="60" fill="currentColor"/>
+                            <rect x="12" y="20" width="2" height="60" fill="currentColor"/>
+                            <rect x="17" y="20" width="6" height="60" fill="currentColor"/>
+                            <rect x="26" y="20" width="3" height="60" fill="currentColor"/>
+                            <rect x="32" y="20" width="2" height="60" fill="currentColor"/>
+                            <rect x="37" y="20" width="5" height="60" fill="currentColor"/>
+                            <rect x="45" y="20" width="2" height="60" fill="currentColor"/>
+                            <rect x="50" y="20" width="7" height="60" fill="currentColor"/>
+                            <rect x="60" y="20" width="4" height="60" fill="currentColor"/>
+                            <rect x="67" y="20" width="2" height="60" fill="currentColor"/>
+                            <rect x="72" y="20" width="5" height="60" fill="currentColor"/>
+                            <rect x="80" y="20" width="3" height="60" fill="currentColor"/>
+                            <rect x="86" y="20" width="2" height="60" fill="currentColor"/>
+                            <rect x="91" y="20" width="4" height="60" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h2 class="idle-title">Отсканируйте штрих-код</h2>
+                    <div class="arrow-down">
+                        <svg viewBox="0 0 24 24" width="48" height="48">
+                            <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+                        </svg>
+                    </div>
+                </div>
             </div>
 
             <!-- Анимация загрузки -->
@@ -39,6 +57,9 @@
             <!-- Результат -->
             <div id="result" class="result hidden">
                 <div class="result-card">
+                    <div id="product-image-container" class="product-image-container hidden">
+                        <img id="product-image" class="product-image" alt="Изображение товара">
+                    </div>
                     <h2 id="product-name">Название товара</h2>
                     <div class="price-display">
                         <span class="price-label">Цена:</span>
@@ -58,13 +79,6 @@
                     <h3>❌ Ошибка</h3>
                     <p id="error-message"></p>
                 </div>
-            </div>
-
-            <!-- История последних проверок -->
-            <div class="history-section">
-                <h3>История проверок</h3>
-                <div id="history-list" class="history-list"></div>
-                <button id="clear-history" class="btn-secondary">Очистить историю</button>
             </div>
         </main>
 
