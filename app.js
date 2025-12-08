@@ -453,7 +453,7 @@ class PriceChecker {
     }
 
     loadApiUrl() {
-        return localStorage.getItem('apiUrl') || '';
+        return localStorage.getItem('apiUrl') || 'http://192.168.0.200/SmallBusiness/hs/products/get_product?barcode={barcode}';
     }
 
     // Service Worker для PWA
