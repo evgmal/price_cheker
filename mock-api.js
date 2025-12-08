@@ -26,28 +26,24 @@ const products = {
         barcode: '4607034378486',
         name: 'Молоко 3.2% 1л',
         price: 89.90,
-        currency: 'RUB',
         image: generateProductImage('Молоко', '#64B5F6')
     },
     '4601879008609': {
         barcode: '4601879008609',
         name: 'Хлеб белый 500г',
         price: 45.50,
-        currency: 'RUB',
         image: generateProductImage('Хлеб', '#FFB74D')
     },
     '4690302932947': {
         barcode: '4690302932947',
         name: 'Масло сливочное 82.5% 200г',
         price: 189.00,
-        currency: 'RUB',
         image: generateProductImage('Масло', '#FFD54F')
     },
     '1234567890123': {
         barcode: '1234567890123',
         name: 'Тестовый товар',
         price: 99.99,
-        currency: 'RUB',
         image: generateProductImage('Тестовый товар', '#81C784')
     }
 };
@@ -56,7 +52,7 @@ const server = http.createServer((req, res) => {
     // CORS заголовки
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     // Обработка OPTIONS запроса (preflight)
     if (req.method === 'OPTIONS') {
@@ -77,9 +73,10 @@ const server = http.createServer((req, res) => {
         // Симуляция задержки сети (для демонстрации анимации загрузки)
         setTimeout(() => {
             if (!barcode) {
-                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify({
-                    error: 'Штрих-код не указан'
+                    error: 'Штрих-код не указан',
+                    code: 400
                 }));
                 return;
             }
@@ -89,7 +86,7 @@ const server = http.createServer((req, res) => {
             if (product) {
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify(product));
-                console.log(`  → Товар найден: ${product.name}, цена: ${product.price} ${product.currency}`);
+                console.log(`  → Товар найден: ${product.name}, цена: ${product.price}`);
             } else {
                 // Если товар не найден, генерируем случайную цену для демонстрации
                 const randomPrice = Math.floor(Math.random() * 1000) + 50;
@@ -97,13 +94,12 @@ const server = http.createServer((req, res) => {
                     barcode: barcode,
                     name: `Товар ${barcode}`,
                     price: randomPrice,
-                    currency: 'RUB',
                     image: generateProductImage(`Товар ${barcode}`, '#9575CD')
                 };
 
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify(randomProduct));
-                console.log(`  → Товар не найден, сгенерирован: ${randomProduct.name}, цена: ${randomProduct.price} ${randomProduct.currency}`);
+                console.log(`  → Товар не найден, сгенерирован: ${randomProduct.name}, цена: ${randomProduct.price}`);
             }
         }, 500); // 500мс задержка для имитации сети
 
@@ -115,9 +111,10 @@ const server = http.createServer((req, res) => {
 
         setTimeout(() => {
             if (!barcode) {
-                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify({
-                    error: 'Штрих-код не указан'
+                    error: 'Штрих-код не указан',
+                    code: 400
                 }));
                 return;
             }
@@ -126,13 +123,12 @@ const server = http.createServer((req, res) => {
                 barcode: barcode,
                 name: `Товар ${barcode}`,
                 price: Math.floor(Math.random() * 1000) + 50,
-                currency: 'RUB',
                 image: generateProductImage(`Товар ${barcode}`, '#9575CD')
             };
 
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
             res.end(JSON.stringify(product));
-            console.log(`  → ${product.name}, цена: ${product.price} ${product.currency}`);
+            console.log(`  → ${product.name}, цена: ${product.price}`);
         }, 500);
 
     } else if (pathname === '/') {
@@ -171,13 +167,18 @@ const server = http.createServer((req, res) => {
                     <p>Пример: <a href="/product/1234567890123">/product/1234567890123</a></p>
                 </div>
 
-                <h2>Формат ответа:</h2>
+                <h2>Формат успешного ответа:</h2>
                 <pre>{
   "barcode": "1234567890123",
   "name": "Тестовый товар",
   "price": 99.99,
-  "currency": "RUB",
   "image": "data:image/svg+xml;base64,..."
+}</pre>
+
+                <h2>Формат ответа с ошибкой:</h2>
+                <pre>{
+  "error": "Товар не найден",
+  "code": 404
 }</pre>
 
                 <h2>Тестовые штрих-коды:</h2>

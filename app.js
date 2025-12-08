@@ -314,9 +314,17 @@ class PriceChecker {
         // Добавляем Basic Auth если указаны логин и пароль
         if (this.apiUsername) {
             const credentials = `${this.apiUsername}:${this.apiPassword}`;
+
             // Кодируем в UTF-8 и затем в base64 для поддержки кириллицы
-            const base64Credentials = btoa(String.fromCharCode(...new TextEncoder().encode(credentials)));
+            // Используем безопасный метод с apply для больших строк
+            const utf8Bytes = new TextEncoder().encode(credentials);
+            const base64Credentials = btoa(String.fromCharCode.apply(null, utf8Bytes));
             headers['Authorization'] = `Basic ${base64Credentials}`;
+
+            // Отладочная информация
+            console.log('Отправка запроса с авторизацией:');
+            console.log('  Логин:', this.apiUsername);
+            console.log('  URL:', url);
         }
 
         try {
@@ -325,17 +333,24 @@ class PriceChecker {
                 headers: headers,
             });
 
-            if (!response.ok) {
-                if (response.status === 401) {
-                    throw new Error('Ошибка авторизации: неверный логин или пароль');
-                }
-                throw new Error(`HTTP ошибка: ${response.status}`);
+            // Проверяем статус авторизации
+            if (response.status === 401) {
+                console.error('Ошибка 401: Неверный логин или пароль');
+                console.log('  Текущий логин:', this.apiUsername);
+                console.log('  Пароль установлен:', this.apiPassword ? 'Да' : 'Нет');
+                throw new Error('Ошибка авторизации: неверный логин или пароль');
             }
 
+            // Парсим JSON ответ
             const data = await response.json();
 
-            // Проверяем формат ответа
-            if (!data.price && data.price !== 0) {
+            // Проверяем наличие ошибки в ответе
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Проверяем формат успешного ответа
+            if (data.name === undefined || data.price === undefined) {
                 throw new Error('Некорректный формат ответа от сервера');
             }
 
@@ -344,6 +359,9 @@ class PriceChecker {
         } catch (error) {
             if (error.name === 'TypeError') {
                 throw new Error('Ошибка подключения к серверу');
+            }
+            if (error.name === 'SyntaxError') {
+                throw new Error('Ошибка парсинга ответа от сервера');
             }
             throw error;
         }

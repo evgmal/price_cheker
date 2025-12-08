@@ -6,9 +6,7 @@ const ASSETS_TO_CACHE = [
     '/index.html',
     '/styles.css',
     '/app.js',
-    '/manifest.json',
-    '/icon-192.png',
-    '/icon-512.png'
+    '/manifest.json'
 ];
 
 // Установка Service Worker
@@ -52,11 +50,21 @@ self.addEventListener('activate', (event) => {
 // Обработка запросов
 self.addEventListener('fetch', (event) => {
     const { request } = event;
-    const url = new URL(request.url);
 
-    // Не кэшируем API запросы
-    if (request.method !== 'GET' || url.pathname.includes('/api/')) {
+    // Проверяем URL только для действительных запросов
+    let url;
+    try {
+        url = new URL(request.url);
+    } catch (e) {
+        // Если URL невалидный, пропускаем
         return;
+    }
+
+    // Кешируем только HTTP/HTTPS GET запросы от нашего домена
+    if (request.method !== 'GET' ||
+        url.pathname.includes('/api/') ||
+        url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return; // Браузер обработает запрос самостоятельно
     }
 
     // Стратегия: Network First, затем Cache
@@ -64,6 +72,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(request)
             .then((response) => {
+                // Проверяем что ответ валидный перед кешированием
+                if (!response || response.status !== 200 || response.type !== 'basic') {
+                    return response;
+                }
+
                 // Клонируем ответ для кэширования
                 const responseClone = response.clone();
 
@@ -84,6 +97,12 @@ self.addEventListener('fetch', (event) => {
                     if (request.destination === 'document') {
                         return caches.match('/index.html');
                     }
+
+                    // Возвращаем пустой ответ для других типов ресурсов
+                    return new Response('', {
+                        status: 404,
+                        statusText: 'Not Found'
+                    });
                 });
             })
     );
