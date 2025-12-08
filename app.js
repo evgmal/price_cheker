@@ -320,11 +320,12 @@ class PriceChecker {
             const utf8Bytes = new TextEncoder().encode(credentials);
             const base64Credentials = btoa(String.fromCharCode.apply(null, utf8Bytes));
             headers['Authorization'] = `Basic ${base64Credentials}`;
-
+		
             // Отладочная информация
             console.log('Отправка запроса с авторизацией:');
             console.log('  Логин:', this.apiUsername);
             console.log('  URL:', url);
+            console.log('  Authorization:', `Basic ${base64Credentials}`);
         }
 
         try {
@@ -522,6 +523,11 @@ class PriceChecker {
 }
 
 // Инициализация приложения
+let priceChecker; // Глобальная переменная для отладки
 document.addEventListener('DOMContentLoaded', () => {
-    new PriceChecker();
+    priceChecker = new PriceChecker();
+
+    // Делаем доступным из консоли для отладки
+    window.priceChecker = priceChecker;
+    console.log('💡 Для отладки используйте: priceChecker.fetchPrice("1234567890123")');
 });
