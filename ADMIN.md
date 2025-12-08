@@ -15,6 +15,8 @@
 ### Что можно настроить
 
 - **URL для проверки цен** - адрес вашего API сервера
+- **Логин** - логин для Basic HTTP Authentication (по умолчанию: "Администратор")
+- **Пароль** - пароль для Basic HTTP Authentication (по умолчанию: пусто)
 
 ### Примеры настройки URL
 
@@ -51,6 +53,8 @@ http://localhost:3000/price?barcode={barcode}
 2. Выполните команду:
    ```javascript
    localStorage.removeItem('apiUrl');
+   localStorage.removeItem('apiUsername');
+   localStorage.removeItem('apiPassword');
    location.reload();
    ```
 
@@ -59,6 +63,11 @@ http://localhost:3000/price?barcode={barcode}
 - Настройки сохраняются в LocalStorage браузера на устройстве
 - При переустановке приложения настройки сохраняются
 - Для полной очистки данных используйте "Очистить данные сайта" в настройках браузера
+
+**Важно:**
+- Логин и пароль хранятся в LocalStorage в открытом виде
+- Не используйте это приложение на общедоступных устройствах без соблюдения мер безопасности
+- Используется Basic HTTP Authentication с поддержкой кириллицы (UTF-8)
 
 ### Технические детали
 

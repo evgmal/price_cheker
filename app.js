@@ -3,6 +3,8 @@
 class PriceChecker {
     constructor() {
         this.apiUrl = this.loadApiUrl();
+        this.apiUsername = this.loadUsername();
+        this.apiPassword = this.loadPassword();
         this.clickCount = 0;
         this.clickTimer = null;
         this.settingsUnlocked = false;
@@ -29,6 +31,8 @@ class PriceChecker {
         this.settingsToggle = document.getElementById('settings-toggle');
         this.settingsPanel = document.getElementById('settings-panel');
         this.apiUrlInput = document.getElementById('api-url');
+        this.apiUsernameInput = document.getElementById('api-username');
+        this.apiPasswordInput = document.getElementById('api-password');
         this.saveSettingsBtn = document.getElementById('save-settings');
         this.appTitle = document.getElementById('app-title');
 
@@ -37,6 +41,8 @@ class PriceChecker {
 
         // Загружаем настройки в UI
         this.apiUrlInput.value = this.apiUrl;
+        this.apiUsernameInput.value = this.apiUsername;
+        this.apiPasswordInput.value = this.apiPassword;
 
         // Показываем экран ожидания
         this.showIdleScreen();
@@ -300,15 +306,29 @@ class PriceChecker {
     async fetchPrice(barcode) {
         const url = this.buildApiUrl(barcode);
 
+        // Подготовка заголовков с Basic Authentication
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+
+        // Добавляем Basic Auth если указаны логин и пароль
+        if (this.apiUsername) {
+            const credentials = `${this.apiUsername}:${this.apiPassword}`;
+            // Кодируем в UTF-8 и затем в base64 для поддержки кириллицы
+            const base64Credentials = btoa(String.fromCharCode(...new TextEncoder().encode(credentials)));
+            headers['Authorization'] = `Basic ${base64Credentials}`;
+        }
+
         try {
             const response = await fetch(url, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Ошибка авторизации: неверный логин или пароль');
+                }
                 throw new Error(`HTTP ошибка: ${response.status}`);
             }
 
@@ -447,13 +467,27 @@ class PriceChecker {
     // Настройки
     saveSettings() {
         this.apiUrl = this.apiUrlInput.value.trim();
+        this.apiUsername = this.apiUsernameInput.value.trim();
+        this.apiPassword = this.apiPasswordInput.value;
+
         localStorage.setItem('apiUrl', this.apiUrl);
+        localStorage.setItem('apiUsername', this.apiUsername);
+        localStorage.setItem('apiPassword', this.apiPassword);
+
         this.settingsPanel.classList.add('hidden');
         alert('Настройки сохранены!');
     }
 
     loadApiUrl() {
         return localStorage.getItem('apiUrl') || 'http://192.168.0.200/SmallBusiness/hs/products/get_product?barcode={barcode}';
+    }
+
+    loadUsername() {
+        return localStorage.getItem('apiUsername') || 'Администратор';
+    }
+
+    loadPassword() {
+        return localStorage.getItem('apiPassword') || '';
     }
 
     // Service Worker для PWA
